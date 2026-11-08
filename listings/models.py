@@ -78,20 +78,24 @@ class Listing(models.Model):
         return f"{self.price} zł"
 
 
-class ProfileComment(models.Model):
-    profile_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_comments', verbose_name="Kogo dotyczy opinia")
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_comments', verbose_name="Autor opinii")
+class ListingComment(models.Model):
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='comments', verbose_name="Ogłoszenie")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listing_comments', verbose_name="Autor opinii")
     content = models.TextField(verbose_name="Treść komentarza")
     
     # Moderacja AI
     is_approved_by_ai = models.BooleanField(default=True, verbose_name="Zatwierdzone przez AI")
     ai_flag_reason = models.CharField(max_length=255, null=True, blank=True, verbose_name="Powód flagi AI")
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data wystawienia")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data dodania")
 
     class Meta:
-        verbose_name = "Komentarz na profilu"
-        verbose_name_plural = "Komentarze na profilach"
+        verbose_name = "Komentarz pod ogłoszeniem"
+        verbose_name_plural = "Komentarze pod ogłoszeniami"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Komentarz {self.author.username} pod {self.listing.title}"
 
 
 class PrivateMessage(models.Model):

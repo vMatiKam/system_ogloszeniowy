@@ -1,5 +1,6 @@
 from django import forms
-from .models import Listing
+from .models import Listing, PrivateMessage, ListingComment
+
 
 class ListingForm(forms.ModelForm):
     class Meta:
@@ -13,4 +14,36 @@ class ListingForm(forms.ModelForm):
             'condition': forms.Select(attrs={'class': 'form-select'}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'np. Warszawa'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = PrivateMessage
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 4, 
+                'placeholder': 'Napisz wiadomość do sprzedającego...'
+            }),
+        }
+        labels = {
+            'content': 'Treść wiadomości'
+        }
+
+
+class ListingCommentForm(forms.ModelForm):
+    class Meta:
+        model = ListingComment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placeholder': 'Napisz komentarz lub zadaj pytanie dotyczące oferty...'
+            }),
+        }
+        labels = {
+            'content': 'Twój komentarz'
         }

@@ -3,7 +3,8 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow-sm">
+        <!-- Karta ogłoszenia -->
+        <div class="card shadow-sm mb-4">
             {% if listing.image %}
                 <img src="{{ listing.image.url }}" class="card-img-top" alt="{{ listing.title }}" style="max-height: 400px; object-fit: cover;">
             {% endif %}
@@ -28,7 +29,45 @@
                     <div class="col-md-6">
                         <p><strong>Dodający:</strong> {{ listing.owner.username }}</p>
                         <p><strong>Data:</strong> {{ listing.created_at|date:"d.m.Y H:i" }}</p>
+                        {% if user.is_authenticated and user != listing.owner %}
+                            <a href="{% url 'send_message' listing_slug=listing.slug %}" class="btn btn-outline-primary btn-sm mt-2">💬 Napisz wiadomość prywatną</a>
+                        {% endif %}
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sekcja komentarzy pod ogłoszeniem -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="mb-3">Komentarze ({{ comments.count }})</h4>
+
+                <!-- Formularz dodawania komentarza -->
+                {% if user.is_authenticated %}
+                    <form method="POST" class="mb-4">
+                        {% csrf_token %}
+                        {{ comment_form.as_p }}
+                        <button type="submit" class="btn btn-success btn-sm">Dodaj komentarz</button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-light">
+                        <a href="{% url 'login' %}">Zaloguj się</a>, aby dodać komentarz.
+                    </div>
+                {% endif %}
+
+                <!-- Lista opublikowanych komentarzy -->
+                <div class="list-group">
+                    {% for comment in comments %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 fw-bold">{{ comment.author.username }}</h6>
+                                <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1">{{ comment.content }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center py-3">Brak komentarzy. Bądź pierwszy!</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
