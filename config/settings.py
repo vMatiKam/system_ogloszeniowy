@@ -140,6 +140,10 @@ MAILERS = {
     },
 }
 
-# Konfiguracja e-mail (lub mam tu środowisko deweloperskie w terminalu)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Konfiguracja e-mail dla Django (VS Code)
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.console.EmailBackend",
+    }
+}
 DEFAULT_FROM_EMAIL = 'no-reply@system-ogloszeniowy.pl'
