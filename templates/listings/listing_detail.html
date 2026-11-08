@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            {% if listing.image %}
+                <img src="{{ listing.image.url }}" class="card-img-top" alt="{{ listing.title }}" style="max-height: 400px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-secondary">{{ listing.category.name }}</span>
+                    <small class="text-muted">Wyświetleń: {{ listing.views_count }}</small>
+                </div>
+                <h2>{{ listing.title }}</h2>
+                <h4 class="text-primary fw-bold my-3">{{ listing.display_price }} {% if listing.is_negotiable %}<small class="text-muted fs-6">(do negocjacji)</small>{% endif %}</h4>
+                
+                <hr>
+                <h5>Opis ogłoszenia</h5>
+                <p class="card-text" style="white-space: pre-line;">{{ listing.description }}</p>
+                <hr>
+
+                <div class="row text-muted">
+                    <div class="col-md-6">
+                        <p><strong>Stan:</strong> {{ listing.get_condition_display|default:"Nie dotyczy" }}</p>
+                        <p><strong>Lokalizacja:</strong> {{ listing.location }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Dodający:</strong> {{ listing.owner.username }}</p>
+                        <p><strong>Data:</strong> {{ listing.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
