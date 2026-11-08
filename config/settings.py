@@ -43,9 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Aplikacja:
     'listings',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -138,3 +139,7 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+# Konfiguracja e-mail (lub mam tu środowisko deweloperskie w terminalu)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'no-reply@system-ogloszeniowy.pl'
