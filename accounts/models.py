@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -9,6 +10,7 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=100, null=True, blank=True, verbose_name="Miejscowość")
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Zdjęcie profilowe")
     show_phone = models.BooleanField(default=True, verbose_name="Pokazuj telefon w ogłoszeniach")
+    activation_token = models.CharField(max_length=64, null=True, blank=True, verbose_name="Token aktywacyjny")
 
     class Meta:
         verbose_name = "Profil użytkownika"
@@ -18,7 +20,7 @@ class UserProfile(models.Model):
         return f"Profil: {self.user.username}"
 
 
-# Sygnały automatycznie tworzące i zapisujące profil przy rejestracji Usera
+# Sygnały bezpieczne – tworzą profil, jeśli nie istnieje
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -26,4 +28,8 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    # Jeśli konto nie ma jeszcze profilu (np. stary admin), utwórz go zamiast rzucać błędem
+    if not hasattr(instance, 'profile'):
+        UserProfile.objects.create(user=instance)
+    else:
+        instance.profile.save()

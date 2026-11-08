@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-4">Edycja profilu</h3>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <h5 class="text-secondary mb-3">Dane konta</h5>
+                    {{ u_form.as_p }}
+                    <hr>
+                    <h5 class="text-secondary mb-3">Dane kontaktowe i wizualne</h5>
+                    {{ p_form.as_p }}
+                    <button type="submit" class="btn btn-primary mt-3">Zapisz zmiany</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

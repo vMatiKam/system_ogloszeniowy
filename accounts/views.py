@@ -1,32 +1,38 @@
+import uuid
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.conf import settings
 
+# <--- Ddodany import modelu UserProfile
+from .models import UserProfile
 from .forms import RegisterForm, UserUpdateForm, ProfileUpdateForm
+
 
 def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False  # Blokujemy konto do czasu weryfikacji e-mail
+            user.is_active = False  # Użytkownik nieaktywny
             user.save()
 
-            # Generowanie tokena i linku aktywacyjnego
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            activation_link = f"http://{request.get_host()}/accounts/activate/{uid}/{token}/"
+            # Wygenerowanie unikalnego tokena UUID i zapisanie go w profilu
+            token = str(uuid.uuid4())
+            user.profile.activation_token = token
+            user.profile.save()
 
-            # Treść wiadomości e-mail
+            activation_link = f"http://{request.get_host()}/accounts/activate/{token}/"
+
+            print(f"\n==========================================")
+            print(f"LINK AKTYWACYJNY DLA {user.username}:")
+            print(activation_link)
+            print(f"==========================================\n")
+
             mail_subject = 'Aktywacja konta w serwisie ogłoszeniowym'
-            message = f"Cześć {user.username}!\n\nDziękujemy za rejestrację. Kliknij poniższy link, aby aktywować swoje konto:\n{activation_link}\n\nJeśli to nie Ty rejestrowałeś konto, zignoruj tę wiadomość."
+            message = f"Cześć {user.username}!\n\nKliknij poniższy link, aby aktywować konto:\n{activation_link}"
             
             send_mail(
                 mail_subject,
@@ -36,28 +42,33 @@ def register_view(request):
                 fail_silently=False,
             )
 
-            messages.info(request, 'Konto zostało utworzone! Sprawdź swoją skrzynkę e-mail i kliknij link aktywacyjny.')
+            messages.info(request, 'Konto zostało utworzone! Skopiuj link z terminala, aby aktywować konto.')
             return redirect('login')
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
 
 
-def activate_account(request, uidb64, token):
+def activate_account(request, token):
     try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-
-    if user is not None and default_token_generator.check_token(user, token):
+        # Szukamy profilu na podstawie aktywacyjnego tokena UUID
+        profile = UserProfile.objects.get(activation_token=token)
+        user = profile.user
+        
         user.is_active = True
         user.save()
+        
+        # Kasujemy token po pomyślnej aktywacji
+        profile.activation_token = None
+        profile.save()
+
         messages.success(request, 'Twoje konto zostało pomyślnie aktywowane! Możesz się teraz zalogować.')
         return redirect('login')
-    else:
-        messages.error(request, 'Link aktywacyjny jest nieprawidłowy lub wygasł.')
+        
+    except UserProfile.DoesNotExist:
+        messages.error(request, 'Link aktywacyjny jest nieprawidłowy lub został już wykorzystany.')
         return redirect('register')
+
 
 @login_required
 def profile_view(request):
@@ -73,8 +84,4 @@ def profile_view(request):
         u_form = UserUpdateForm(instance=request.user)
         p_form = ProfileUpdateForm(instance=request.user.profile)
 
-    context = {
-        'u_form': u_form,
-        'p_form': p_form
-    }
-    return render(request, 'accounts/profile.html', context)
+    return render(request, 'accounts/profile.html', {'u_form': u_form, 'p_form': p_form})
