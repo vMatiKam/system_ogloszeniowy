@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">💬 Wyślij wiadomość do sprzedającego</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border mb-4">
+                    <h6 class="fw-bold mb-1">Dotyczy ogłoszenia:</h6>
+                    <p class="mb-0 text-primary">{{ listing.title }}</p>
+                    <small class="text-muted">Cena: {{ listing.display_price }} | Sprzedający: {{ listing.owner.username }}</small>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_content" class="form-label fw-bold">Treść wiadomości:</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.content.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'listing_detail' slug=listing.slug %}" class="btn btn-outline-secondary">← Powrót do ogłoszenia</a>
+                        <button type="submit" class="btn btn-success">Wyślij wiadomość</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

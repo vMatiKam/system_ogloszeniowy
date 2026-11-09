@@ -23,9 +23,9 @@ class MessageForm(forms.ModelForm):
         fields = ['content']
         widgets = {
             'content': forms.Textarea(attrs={
-                'class': 'form-control', 
-                'rows': 4, 
-                'placeholder': 'Napisz wiadomość do sprzedającego...'
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Wpisz treść wiadomości do ogłoszeniodawcy...'
             }),
         }
         labels = {
