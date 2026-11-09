@@ -4,6 +4,12 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import UserProfile
 
 class RegisterForm(UserCreationForm):
+    username = forms.CharField(
+        max_length=20,
+        label="Nazwa użytkownika",
+        help_text="",  # Pusty napis — usuwa całkowicie tekst pomocniczy
+        widget=forms.TextInput(attrs={'class': 'form-control', 'maxlength': '20'})
+    )
     email = forms.EmailField(
         required=True, 
         label="Adres e-mail",
@@ -13,18 +19,9 @@ class RegisterForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("username", "email")
-        labels = {
-            'username': 'Nazwa użytkownika',
-        }
-        help_texts = {
-            'username': 'Wymagane. Maksymalnie 150 znaków. Tylko litery, cyfry i znaki @/./+/-/_.',
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Przechwycenie i spolszczenie pól haseł dziedziczonych z UserCreationForm
-        if 'username' in self.fields:
-            self.fields['username'].widget.attrs.update({'class': 'form-control'})
 
         if 'password1' in self.fields:
             self.fields['password1'].label = "Hasło"
@@ -35,7 +32,6 @@ class RegisterForm(UserCreationForm):
             self.fields['password2'].label = "Potwierdzenie hasła"
             self.fields['password2'].help_text = "Wpisz dokładnie to samo hasło co powyżej w celu weryfikacji."
             self.fields['password2'].widget.attrs.update({'class': 'form-control'})
-
 
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField(
