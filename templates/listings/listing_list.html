@@ -87,7 +87,7 @@
                         {% endif %}
 
                         {% if listing.image %}
-                            <img src="{{ listing.image.url }}" class="card-img-top" alt="{{ listing.title }}" style="height: 180px; object-fit: cover;" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'bg-secondary text-white text-center py-5\' style=\'height: 180px;\'>Brak zdjęcia</div>';">
+                            <img src="{{ listing.image.url }}" class="card-img-top bg-light" alt="{{ listing.title }}" style="height: 220px; object-fit: contain; padding: 5px;">
                         {% else %}
                             <div class="bg-secondary text-white text-center py-5" style="height: 180px;">Brak zdjęcia</div>
                         {% endif %}
