@@ -42,7 +42,7 @@ def register_view(request):
                 fail_silently=False,
             )
 
-            messages.info(request, 'Konto zostało utworzone! Skopiuj link z terminala, aby aktywować konto.')
+            messages.success(request, 'Konto zostało utworzone! Wysłyłaliśmy link aktywacyjny na Twój adres e-mail. Sprawdź skrzynkę (oraz folder SPAM), aby aktywować konto.')
             return redirect('login')
     else:
         form = RegisterForm()
