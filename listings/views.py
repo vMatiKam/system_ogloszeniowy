@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.contrib.auth.models import User
 from .models import Listing, Category, PrivateMessage, ListingComment, Favorite
 from .forms import ListingForm, MessageForm, ListingCommentForm
 from .moderation import analyze_text_content
@@ -190,7 +191,6 @@ def toggle_favorite(request, slug):
     else:
         messages.success(request, f'Dodano "{listing.title}" do ulubionych!')
     
-    # Przekierowanie z powrotem na stronę, z której kliknięto
     next_url = request.META.get('HTTP_REFERER')
     return redirect(next_url if next_url else 'listing_list')
 
@@ -201,7 +201,7 @@ def my_favorites(request):
     return render(request, 'listings/my_favorites.html', {'favorites': favorites})
 
 
-# Wiadomości prywatne
+# 4. Nowy moduł konwersacji (Wiadomości prywatne)
 @login_required
 def send_message(request, listing_slug):
     listing = get_object_or_404(Listing, slug=listing_slug, status='active')
@@ -224,11 +224,11 @@ def send_message(request, listing_slug):
                 msg.ai_flag_reason = reason
                 msg.save()
                 messages.error(request, f"Wiadomość zablokowana przez moderację AI: {reason}")
+                return redirect('listing_detail', slug=listing.slug)
             else:
                 msg.save()
                 messages.success(request, "Wiadomość została wysłana!")
-
-            return redirect('listing_detail', slug=listing.slug)
+                return redirect('chat_thread', username=listing.owner.username)
     else:
         form = MessageForm()
 
@@ -237,11 +237,86 @@ def send_message(request, listing_slug):
 
 @login_required
 def inbox_view(request):
-    received_messages = PrivateMessage.objects.filter(recipient=request.user).order_by('-created_at')
-    sent_messages = PrivateMessage.objects.filter(sender=request.user).order_by('-created_at')
+    """
+    Wyświetla unikalne konwersacje pogrupowane według rozmówców.
+    """
+    user = request.user
+    
+    # Rozmówcy, do których wysłano lub od których odebrano niezablokowane wiadomości
+    sent_to = PrivateMessage.objects.filter(sender=user, is_blocked_by_ai=False).values_list('recipient', flat=True)
+    received_from = PrivateMessage.objects.filter(recipient=user, is_blocked_by_ai=False).values_list('sender', flat=True)
+    
+    partner_ids = set(list(sent_to) + list(received_from))
+    partners = User.objects.filter(id__in=partner_ids)
+    
+    conversations = []
+    for partner in partners:
+        last_msg = PrivateMessage.objects.filter(
+            (Q(sender=user, recipient=partner) | Q(sender=partner, recipient=user)),
+            is_blocked_by_ai=False
+        ).order_by('-created_at').first()
+        
+        unread_count = PrivateMessage.objects.filter(
+            sender=partner, recipient=user, is_read=False, is_blocked_by_ai=False
+        ).count()
+        
+        conversations.append({
+            'partner': partner,
+            'last_message': last_msg,
+            'unread_count': unread_count,
+        })
+    
+    conversations.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else 0, reverse=True)
+    return render(request, 'listings/inbox.html', {'conversations': conversations})
 
-    context = {
-        'received_messages': received_messages,
-        'sent_messages': sent_messages,
-    }
-    return render(request, 'listings/inbox.html', context)
+
+@login_required
+def chat_thread_view(request, username):
+    """
+    Pełny widok chatu z natychmiastową odpowiedzią i moderacją AI.
+    """
+    partner = get_object_or_404(User, username=username)
+    user = request.user
+
+    if user == partner:
+        messages.warning(request, "Nie możesz pisać sam ze sobą.")
+        return redirect('inbox')
+
+    # Oznaczenie nieprzeczytanych wiadomości od tego partnera jako przeczytane
+    PrivateMessage.objects.filter(sender=partner, recipient=user, is_read=False).update(is_read=True)
+
+    chat_messages = PrivateMessage.objects.filter(
+        (Q(sender=user, recipient=partner) | Q(sender=partner, recipient=user)),
+        is_blocked_by_ai=False
+    ).order_by('created_at')
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = user
+            msg.recipient = partner
+            
+            # Przypisanie ogłoszenia z historii konwersacji (jeśli istnieje)
+            last_msg_with_listing = chat_messages.filter(listing__isnull=False).last()
+            if last_msg_with_listing:
+                msg.listing = last_msg_with_listing.listing
+                
+            is_clean, reason = analyze_text_content(msg.content)
+            if not is_clean:
+                msg.is_blocked_by_ai = True
+                msg.ai_flag_reason = reason
+                msg.save()
+                messages.error(request, f"Wiadomość zablokowana przez moderację AI: {reason}")
+            else:
+                msg.save()
+            
+            return redirect('chat_thread', username=partner.username)
+    else:
+        form = MessageForm()
+
+    return render(request, 'listings/chat_thread.html', {
+        'partner': partner,
+        'chat_messages': chat_messages,
+        'form': form
+    })

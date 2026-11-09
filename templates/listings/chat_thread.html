@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Nagłówek chatu -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'inbox' %}" class="btn btn-sm btn-outline-secondary">← Powrót</a>
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                        {{ partner.username|slice:":1"|upper }}
+                    </div>
+                    <h5 class="mb-0 fw-bold">{{ partner.username }}</h5>
+                </div>
+            </div>
+            
+            <!-- Okno konwersacji -->
+            <div class="card-body bg-light p-4" style="height: 450px; overflow-y: auto;" id="chatWindow">
+                {% for msg in chat_messages %}
+                    <div class="d-flex mb-3 {% if msg.sender == user %}justify-content-end{% else %}justify-content-start{% endif %}">
+                        <div class="p-3 rounded-3 shadow-sm" style="max-width: 75%; {% if msg.sender == user %}background-color: #0d6efd; color: white;{% else %}background-color: #ffffff; color: #212529;{% endif %}">
+                            {% if msg.listing %}
+                                <div class="small fw-bold mb-1 opacity-75 border-bottom pb-1">
+                                    📌 Ogłoszenie: {{ msg.listing.title }}
+                                </div>
+                            {% endif %}
+                            <p class="mb-1 text-break">{{ msg.content }}</p>
+                            <small class="d-block text-end opacity-75" style="font-size: 0.75rem;">
+                                {{ msg.created_at|date:"d.m H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-center text-muted py-5">Brak wcześniejszych wiadomości. Rozpocznij rozmowę!</p>
+                {% endfor %}
+            </div>
+
+            <!-- Formularz wysyłania -->
+            <div class="card-footer bg-white p-3 border-0">
+                <form method="POST" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <input type="text" name="content" class="form-control" placeholder="Wpisz wiadomość do {{ partner.username }}..." required autocomplete="off">
+                    <button type="submit" class="btn btn-primary px-4">Wyślij</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Autoscroll na dół czatu -->
+<script>
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+</script>
+{% endblock %}

@@ -17,7 +17,8 @@ urlpatterns = [
     path('my-favorites/', views.my_favorites, name='my_favorites'),
     path('listing/<slug:slug>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     
-    # Wiadomości
+    # Wiadomości & Wątki Chatu
     path('listing/<slug:listing_slug>/contact/', views.send_message, name='send_message'),
     path('inbox/', views.inbox_view, name='inbox'),
+    path('chat/<str:username>/', views.chat_thread_view, name='chat_thread'),
 ]
