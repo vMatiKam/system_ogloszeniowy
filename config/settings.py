@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     # Aplikacja:
+    'cloudinary',
     'listings',
     'accounts',
 ]
@@ -147,3 +147,12 @@ MAILERS = {
     }
 }
 DEFAULT_FROM_EMAIL = 'no-reply@system-ogloszeniowy.pl'
+
+# Konfiguracja Cloudinary do obsługi plików media (zdjęć)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'wu1xw1tx',
+    'API_KEY': '232624324616271',
+    'API_SECRET': '6zt7aHiClIAiIa3-bptVsFVK0sU',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
