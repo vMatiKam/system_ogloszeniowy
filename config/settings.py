@@ -167,3 +167,7 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+# Ustawienia przekierowań autoryzacji
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
