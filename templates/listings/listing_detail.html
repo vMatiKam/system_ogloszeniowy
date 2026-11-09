@@ -14,7 +14,7 @@
         <div class="card shadow-sm mb-4">
             
             {% if listing.image %}
-                <!-- Klikalne zdjęcie z widocznym całym kadrem (contain) -->
+                <!-- Klikalne zdjęcie z widocznym całym kadrem -->
                 <div class="text-center bg-dark rounded-top position-relative" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" title="Kliknij, aby powiększyć">
                     <img src="{{ listing.image.url }}" class="img-fluid rounded-top" alt="{{ listing.title }}" style="max-height: 450px; width: 100%; object-fit: contain;">
                     <span class="badge bg-dark bg-opacity-75 position-absolute bottom-0 end-0 m-2">🔍 Kliknij, aby powiększyć</span>
@@ -31,11 +31,19 @@
                         <span class="badge bg-secondary me-2">{{ listing.category.name }}</span>
                         <small class="text-muted">Wyświetleń: {{ listing.views_count }}</small>
                     </div>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'toggle_favorite' slug=listing.slug %}" class="btn btn-outline-danger btn-sm rounded-pill" title="Dodaj/usuń z ulubionych">
-                            {% if is_favorite %}❤️ W ulubionych{% else %}🤍 Dodaj do ulubionych{% endif %}
-                        </a>
-                    {% endif %}
+                    <div class="d-flex gap-2">
+                        <!-- Przycisk Udostępnij -->
+                        <button type="button" id="shareButton" class="btn btn-outline-secondary btn-sm rounded-pill" title="Udostępnij ogłoszenie">
+                            🔗 Udostępnij
+                        </button>
+
+                        <!-- Przycisk Ulubione -->
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'toggle_favorite' slug=listing.slug %}" class="btn btn-outline-danger btn-sm rounded-pill" title="Dodaj/usuń z ulubionych">
+                                {% if is_favorite %}❤️ W ulubionych{% else %}🤍 Dodaj do ulubionych{% endif %}
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <h2>{{ listing.title }}</h2>
@@ -108,7 +116,7 @@
     </div>
 </div>
 
-<!-- Modal (Okienko powiększenia zdjęcia z Bootstrap) -->
+<!-- Modal dla pełnego zdjęcia -->
 {% if listing.image %}
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -124,4 +132,31 @@
   </div>
 </div>
 {% endif %}
+
+<!-- Skrypt obsługi natywnego udostępniania -->
+<script>
+document.getElementById('shareButton').addEventListener('click', async () => {
+    const shareData = {
+        title: "{{ listing.title|escapejs }}",
+        text: "Zobacz ogłoszenie {{ listing.title|escapejs }} na platformie!",
+        url: window.location.href,
+    };
+
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            console.log('Anulowano udostępnianie:', err);
+        }
+    } else {
+        // Fallback dla przeglądarek bez obsługi Web Share API (np. stary Desktop)
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            alert('Link do ogłoszenia został skopiowany do schowka!');
+        } catch (err) {
+            alert('Nie udało się skopiować linku.');
+        }
+    }
+});
+</script>
 {% endblock %}
