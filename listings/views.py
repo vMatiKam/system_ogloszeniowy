@@ -82,6 +82,10 @@ def listing_detail(request, slug):
         is_favorite = Favorite.objects.filter(user=request.user, listing=listing).exists()
 
     if request.method == 'POST' and request.user.is_authenticated:
+        if listing.status != 'active':
+            messages.error(request, "To ogłoszenie zostało zakończone. Nie można dodawać komentarzy.")
+            return redirect('listing_detail', slug=listing.slug)
+
         comment_form = ListingCommentForm(request.POST)
         if comment_form.is_valid():
             comment = comment_form.save(commit=False)

@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Category, Listing, ListingComment, PrivateMessage
+from .models import Category, Listing, ListingComment, PrivateMessage, Favorite
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'listing', 'created_at')
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

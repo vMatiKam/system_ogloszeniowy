@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">Moje Wiadomości 💬</h2>
+
+        <ul class="nav nav-tabs mb-3" id="messageTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="received-tab" data-bs-toggle="tab" data-bs-target="#received" type="button">Otrzymane</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button">Wysłane</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="messageTabsContent">
+            <!-- Odebrane -->
+            <div class="tab-pane fade show active" id="received">
+                <div class="list-group">
+                    {% for msg in received_messages %}
+                        <div class="list-group-item {% if msg.is_blocked_by_ai %}list-group-item-danger{% endif %}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Od: {{ msg.sender.username }} (Dotyczy: {{ msg.listing.title }})</h5>
+                                <small class="text-muted">{{ msg.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            {% if msg.is_blocked_by_ai %}
+                                <p class="text-danger mb-1"><strong>[ZABLOKOWANE PRZEZ AI]:</strong> {{ msg.ai_flag_reason }}</p>
+                            {% else %}
+                                <p class="mb-1">{{ msg.content }}</p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-light text-center py-4">Brak odebranych wiadomości.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Wysłane -->
+            <div class="tab-pane fade" id="sent">
+                <div class="list-group">
+                    {% for msg in sent_messages %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Do: {{ msg.recipient.username }} (Dotyczy: {{ msg.listing.title }})</h5>
+                                <small class="text-muted">{{ msg.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            {% if msg.is_blocked_by_ai %}
+                                <p class="text-danger mb-1"><strong>[ZABLOKOWANE PRZEZ AI]:</strong> {{ msg.ai_flag_reason }}</p>
+                            {% else %}
+                                <p class="mb-1">{{ msg.content }}</p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-light text-center py-4">Brak wysłanych wiadomości.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
