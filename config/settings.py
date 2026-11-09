@@ -155,4 +155,15 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': '6zt7aHiClIAiIa3-bptVsFVK0sU',
 }
 
+# Starze wersje Django
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Django 4.2+ oraz 5.x+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
