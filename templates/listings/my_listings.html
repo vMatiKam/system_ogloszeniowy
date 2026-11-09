@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Moje Ogłoszenia</h2>
+            <a href="{% url 'listing_create' %}" class="btn btn-success">+ Dodaj nowe ogłoszenie</a>
+        </div>
+
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle bg-white mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Zdjęcie</th>
+                        <th>Tytuł</th>
+                        <th>Cena</th>
+                        <th>Status</th>
+                        <th>Wyświetlenia</th>
+                        <th>Data dodania</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for listing in listings %}
+                        <tr>
+                            <td>
+                                {% if listing.image %}
+                                    <img src="{{ listing.image.url }}" style="width: 60px; height: 45px; object-fit: cover;" class="rounded">
+                                {% else %}
+                                    <span class="badge bg-secondary">Brak</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong><a href="{% url 'listing_detail' slug=listing.slug %}">{{ listing.title }}</a></strong>
+                            </td>
+                            <td>{{ listing.display_price }}</td>
+                            <td>
+                                {% if listing.status == 'active' %}
+                                    <span class="badge bg-success">Aktywne</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Sprzedane / Zakończone</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ listing.views_count }}</td>
+                            <td>{{ listing.created_at|date:"d.m.Y" }}</td>
+                            <td>
+                                <a href="{% url 'toggle_status' slug=listing.slug %}" class="btn btn-outline-warning btn-sm">
+                                    {% if listing.status == 'active' %}Oznacz jako sprzedane{% else %}Aktywuj{% endif %}
+                                </a>
+                                <a href="{% url 'listing_edit' slug=listing.slug %}" class="btn btn-outline-primary btn-sm">Edytuj</a>
+                                <a href="{% url 'listing_delete' slug=listing.slug %}" class="btn btn-outline-danger btn-sm">Usuń</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Nie dodałeś jeszcze żadnych ogłoszeń.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

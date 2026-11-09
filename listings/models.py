@@ -113,3 +113,16 @@ class PrivateMessage(models.Model):
     class Meta:
         verbose_name = "Wiadomość prywatna"
         verbose_name_plural = "Wiadomości prywatne"
+
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites', verbose_name="Użytkownik")
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='favorited_by', verbose_name="Ogłoszenie")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data dodania")
+
+    class Meta:
+        verbose_name = "Ulubione ogłoszenie"
+        verbose_name_plural = "Ulubione ogłoszenia"
+        unique_together = ('user', 'listing')  # Użytkownik może dodać dane ogłoszenie tylko raz
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.listing.title}"
