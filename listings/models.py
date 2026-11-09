@@ -104,6 +104,9 @@ class PrivateMessage(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages', verbose_name="Odbiorca")
     content = models.TextField(verbose_name="Treść wiadomości")
     
+    # Powiadomienia o przeczytaniu
+    is_read = models.BooleanField(default=False, verbose_name="Przeczytana")
+
     # Moderacja AI
     is_blocked_by_ai = models.BooleanField(default=False, verbose_name="Zabronione przez AI")
     ai_flag_reason = models.CharField(max_length=255, null=True, blank=True, verbose_name="Powód blokady")

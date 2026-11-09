@@ -22,8 +22,15 @@
                     {% if user.is_authenticated %}
                         <a class="nav-link" href="{% url 'my_favorites' %}">❤️ Ulubione</a>
                         <a class="nav-link" href="{% url 'my_listings' %}">📦 Moje ogłoszenia</a>
-                        <a class="nav-link" href="{% url 'inbox' %}">💬 Wiadomości</a>
-                        <a class="nav-link fw-semibold" href="{% url 'profile' %}">Witaj, {{ user.username }}</a>
+                        <a class="nav-link position-relative" href="{% url 'inbox' %}">
+                            💬 Wiadomości
+                            {% if unread_messages_count > 0 %}
+                            <span class="badge rounded-pill bg-danger ms-1">
+                            {{ unread_messages_count }}
+                            </span>
+                        {% endif %}
+                        </a>
+                        <a class="nav-link fw-semibold" href="{% url 'profile' %}">Konto {{ user.username }}</a>
                         
                         <form action="{% url 'logout' %}" method="post" class="d-inline ms-lg-2">
                             {% csrf_token %}
