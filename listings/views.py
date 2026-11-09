@@ -201,7 +201,7 @@ def my_favorites(request):
     return render(request, 'listings/my_favorites.html', {'favorites': favorites})
 
 
-# 4. Nowy moduł konwersacji (Wiadomości prywatne)
+# 4. Moduł konwersacji (Wiązanie z konkretnym ogłoszeniem)
 @login_required
 def send_message(request, listing_slug):
     listing = get_object_or_404(Listing, slug=listing_slug, status='active')
@@ -228,7 +228,8 @@ def send_message(request, listing_slug):
             else:
                 msg.save()
                 messages.success(request, "Wiadomość została wysłana!")
-                return redirect('chat_thread', username=listing.owner.username)
+                # Przekierowanie do chatu przypisanego do TEGO ogłoszenia
+                return redirect('chat_thread', listing_slug=listing.slug, username=listing.owner.username)
     else:
         form = MessageForm()
 
@@ -238,43 +239,47 @@ def send_message(request, listing_slug):
 @login_required
 def inbox_view(request):
     """
-    Wyświetla unikalne konwersacje pogrupowane według rozmówców.
+    Wyświetla wątki pogrupowane według pare (ogłoszenie, rozmówca).
     """
     user = request.user
     
-    # Rozmówcy, do których wysłano lub od których odebrano niezablokowane wiadomości
-    sent_to = PrivateMessage.objects.filter(sender=user, is_blocked_by_ai=False).values_list('recipient', flat=True)
-    received_from = PrivateMessage.objects.filter(recipient=user, is_blocked_by_ai=False).values_list('sender', flat=True)
-    
-    partner_ids = set(list(sent_to) + list(received_from))
-    partners = User.objects.filter(id__in=partner_ids)
-    
-    conversations = []
-    for partner in partners:
-        last_msg = PrivateMessage.objects.filter(
-            (Q(sender=user, recipient=partner) | Q(sender=partner, recipient=user)),
-            is_blocked_by_ai=False
-        ).order_by('-created_at').first()
+    # Pobieramy unikalne pary (listing_id, rozmówca) dla zalogowanego użytkownika
+    messages_qs = PrivateMessage.objects.filter(
+        Q(sender=user) | Q(recipient=user),
+        is_blocked_by_ai=False
+    ).select_related('listing', 'sender', 'recipient')
+
+    threads_dict = {}
+    for msg in messages_qs:
+        partner = msg.recipient if msg.sender == user else msg.sender
+        thread_key = (msg.listing_id, partner.id)
         
-        unread_count = PrivateMessage.objects.filter(
-            sender=partner, recipient=user, is_read=False, is_blocked_by_ai=False
-        ).count()
-        
-        conversations.append({
-            'partner': partner,
-            'last_message': last_msg,
-            'unread_count': unread_count,
-        })
-    
-    conversations.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else 0, reverse=True)
+        if thread_key not in threads_dict:
+            threads_dict[thread_key] = {
+                'listing': msg.listing,
+                'partner': partner,
+                'last_message': msg,
+                'unread_count': 0
+            }
+        else:
+            if msg.created_at > threads_dict[thread_key]['last_message'].created_at:
+                threads_dict[thread_key]['last_message'] = msg
+
+        if msg.recipient == user and not msg.is_read:
+            threads_dict[thread_key]['unread_count'] += 1
+
+    conversations = list(threads_dict.values())
+    conversations.sort(key=lambda x: x['last_message'].created_at, reverse=True)
+
     return render(request, 'listings/inbox.html', {'conversations': conversations})
 
 
 @login_required
-def chat_thread_view(request, username):
+def chat_thread_view(request, listing_slug, username):
     """
-    Pełny widok chatu z natychmiastową odpowiedzią i moderacją AI.
+    Pełny widok chatu przypisanego do konkretnego ogłoszenia i rozmówcy.
     """
+    listing = get_object_or_404(Listing, slug=listing_slug)
     partner = get_object_or_404(User, username=username)
     user = request.user
 
@@ -282,12 +287,16 @@ def chat_thread_view(request, username):
         messages.warning(request, "Nie możesz pisać sam ze sobą.")
         return redirect('inbox')
 
-    # Oznaczenie nieprzeczytanych wiadomości od tego partnera jako przeczytane
-    PrivateMessage.objects.filter(sender=partner, recipient=user, is_read=False).update(is_read=True)
+    # Oznaczenie nieprzeczytanych wiadomości w TYM wątku jako przeczytane
+    PrivateMessage.objects.filter(
+        listing=listing, sender=partner, recipient=user, is_read=False
+    ).update(is_read=True)
 
     chat_messages = PrivateMessage.objects.filter(
-        (Q(sender=user, recipient=partner) | Q(sender=partner, recipient=user)),
+        listing=listing,
         is_blocked_by_ai=False
+    ).filter(
+        (Q(sender=user, recipient=partner) | Q(sender=partner, recipient=user))
     ).order_by('created_at')
 
     if request.method == 'POST':
@@ -296,12 +305,8 @@ def chat_thread_view(request, username):
             msg = form.save(commit=False)
             msg.sender = user
             msg.recipient = partner
-            
-            # Przypisanie ogłoszenia z historii konwersacji (jeśli istnieje)
-            last_msg_with_listing = chat_messages.filter(listing__isnull=False).last()
-            if last_msg_with_listing:
-                msg.listing = last_msg_with_listing.listing
-                
+            msg.listing = listing
+
             is_clean, reason = analyze_text_content(msg.content)
             if not is_clean:
                 msg.is_blocked_by_ai = True
@@ -311,11 +316,12 @@ def chat_thread_view(request, username):
             else:
                 msg.save()
             
-            return redirect('chat_thread', username=partner.username)
+            return redirect('chat_thread', listing_slug=listing.slug, username=partner.username)
     else:
         form = MessageForm()
 
     return render(request, 'listings/chat_thread.html', {
+        'listing': listing,
         'partner': partner,
         'chat_messages': chat_messages,
         'form': form
