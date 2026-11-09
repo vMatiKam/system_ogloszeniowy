@@ -115,7 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pl'
 
 TIME_ZONE = 'UTC'
 
@@ -144,7 +144,7 @@ MAILERS = {
 # Konfiguracja e-mail dla Django (VS Code)
 MAILERS = {
     "default": {
-        "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     }
 }
 DEFAULT_FROM_EMAIL = 'no-reply@system-ogloszeniowy.pl'
