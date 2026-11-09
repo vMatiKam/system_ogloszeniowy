@@ -19,7 +19,7 @@
             <div class="card-body bg-light p-4" style="height: 450px; overflow-y: auto;" id="chatWindow">
                 {% for msg in chat_messages %}
                     <div class="d-flex mb-3 {% if msg.sender == user %}justify-content-end{% else %}justify-content-start{% endif %}">
-                        <div class="p-3 rounded-3 shadow-sm" style="max-width: 75%; {% if msg.sender == user %}background-color: #0d6efd; color: white;{% else %}background-color: #ffffff; color: #212529;{% endif %}">
+                        <div class="p-3 rounded-3 shadow-sm {% if msg.sender == user %}bg-primary text-white{% else %}bg-white text-dark{% endif %}" style="max-width: 75%;">
                             {% if msg.listing %}
                                 <div class="small fw-bold mb-1 opacity-75 border-bottom pb-1">
                                     📌 Ogłoszenie: {{ msg.listing.title }}
@@ -40,7 +40,7 @@
             <div class="card-footer bg-white p-3 border-0">
                 <form method="POST" class="d-flex gap-2">
                     {% csrf_token %}
-                    <input type="text" name="content" class="form-control" placeholder="Wpisz wiadomość do {{ partner.username }}..." required autocomplete="off">
+                    <input type="text" name="content" class="form-control" placeholder="Wpisz wiadomość..." required autocomplete="off">
                     <button type="submit" class="btn btn-primary px-4">Wyślij</button>
                 </form>
             </div>
@@ -50,9 +50,11 @@
 
 <!-- Autoscroll na dół czatu -->
 <script>
-    const chatWindow = document.getElementById('chatWindow');
-    if (chatWindow) {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+    document.addEventListener("DOMContentLoaded", function () {
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow) {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    });
 </script>
 {% endblock %}
